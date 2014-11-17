@@ -14,11 +14,11 @@
 (def counter (atom 0N))
 (defonce server (atom nil))
 
-(defn multiSend [x]
+(defn multiSend [x uri]
   (let [futures
         (map
          #(let [strJson (json/write-str %)]
-            (httpc/post "http://localhost:9200/samoa/proxytest"
+            (httpc/post (str "http://localhost:9200" uri)
                        {:headers {"Content-type" "application/json"}
                         :body strJson}))
          x)]
@@ -29,9 +29,10 @@
   @counter)
 
 (defroutes app-routes
-  (POST "/" request
+  (POST "/*" request
         (let [objBody (:body request)
-              intCount (multiSend objBody)]
+              strUri (:uri request)
+              intCount (multiSend objBody strUri)]
           (reset! counter 0N)
           {:status 200
            :body (str "OK: " intCount)}))
